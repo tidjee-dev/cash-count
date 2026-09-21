@@ -117,8 +117,10 @@ ExportHistoryCSV()                      string
 | `/settings`    | **Settings** — store info, currency preset, denomination editor     |
 
 Hash routing via `svelte-spa-router`; the app shell is a sidebar + header
-(theme and language toggles), with native File/Go menus wired to the same
-routes.
+(theme and language toggles), with native File/Go/Help menus wired to the
+same routes. Help > About shows a diagnostics panel: app version, platform,
+data folder, database path + size, exports path + CSV count, with buttons
+to open both folders in the file browser.
 
 ### Count screen layout
 
@@ -178,6 +180,14 @@ drop shifts the balance by its amount; data appears in history.
 - `go vet ./...`, `npm run check` (svelte-check), `wails3 build` smoke test.
 
 **Acceptance:** all checks pass; production build launches.
+
+### M8 — Distribute
+- CI checks (vet + tests + svelte-check) on every push; Linux build on PRs.
+- Tag-driven releases: `v*` tag builds Linux/Windows/macOS-arm64 plus the
+  macOS `.app` bundle and publishes a GitHub Release.
+- Help > About diagnostics panel; README download links.
+
+**Acceptance:** `v0.0.0-test` dry run produced all four assets; tree clean.
 
 ## Open questions / Future
 

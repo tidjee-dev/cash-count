@@ -28,6 +28,8 @@ Latest version, direct links:
 - CSV export (single count + full history), Excel-friendly (UTF-8 BOM)
 - Configurable store info, currency presets (EUR/USD/GBP), and denominations
 - English + French UI, dark/light mode
+- Help > About panel with version, data paths, and open-folder shortcuts
+- Native menus (File/Go/Help) mirroring the in-app navigation
 
 ## Quick start
 
@@ -68,6 +70,9 @@ See [DOCUMENTATION.md](DOCUMENTATION.md) for usage, architecture, and schema.
 Bindings (`frontend/bindings/`) are generated — never edit them by hand. Money
 is integer cents (`int64`) end to end; see [PLAN.md](PLAN.md) for the original
 project plan.
+
+CI checks every push (`.github/workflows/ci.yml`); Linux builds on PRs and
+`v*` tags publish all three OS binaries (`.github/workflows/`).
 
 ## License
 

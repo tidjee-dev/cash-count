@@ -72,6 +72,11 @@ data directory; the app shows the saved path with a copy button.
 lets you add, remove, or disable denominations. Changes apply live to the count
 screen.
 
+**Native menus** — File offers New Count (`CmdOrCtrl+N`) and Export History
+CSV (`CmdOrCtrl+E`); Go jumps between Count, History, and Settings; Help >
+About shows version, platform, and the live data paths (database + size,
+exports + CSV count) with buttons to open both folders.
+
 ## Architecture
 
 Three Go services back the whole app. The webview calls them through
