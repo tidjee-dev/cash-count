@@ -1,30 +1,46 @@
 name: CI
 
+# Note: main.go embeds all:frontend/dist, so the frontend must be built
+# before any go command runs (dist/ is gitignored and absent on fresh
+# checkouts). Keep the npm build step ahead of go vet / go test.
 on:
   push:
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  backend:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go vet ./...
-      - run: go test ./...
 
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+
+      - name: Install frontend deps
+        run: npm ci
         working-directory: frontend
-      - run: npm run check
+
+      - name: Frontend checks
+        run: npm run check
         working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Backend checks
+        run: go vet ./...
+
+      - name: Backend tests
+        run: go test ./...
