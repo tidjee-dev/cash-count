@@ -28,13 +28,13 @@ single-user, fully local.
 
 | Area         | Choice                                            | Rationale                                        |
 | ------------ | ------------------------------------------------- | ------------------------------------------------ |
-| Backend      | Wails v3 (`wails3 init -t sveltekit-ts`)          | Official SvelteKit template, static build baked in |
-| Frontend     | SvelteKit 5, static adapter, SSR off              | Required for Wails embedding                       |
-| UI           | Tailwind 4 + shadcn-svelte                        | Consistent, accessible component system           |
-| Persistence  | SQLite via `modernc.org/sqlite` (pure Go, no CGO) | Single-file DB, no CGO toolchain needed            |
-| Money        | Integer cents everywhere (Go `int64`)             | Eliminates float rounding errors                   |
-| Bindings     | `wails3 generate bindings` (auto-generated TS)    | Type-safe, zero boilerplate front-end calls        |
-| Export       | CSV (Go `encoding/csv`, UTF-8 BOM)                | Excel-friendly, dependency-free                    |
+| Backend      | Wails v3 (Go services, embedded webview)          | Single binary, no server to deploy                       |
+| Frontend     | Svelte 5 SPA (Vite + `svelte-spa-router`)         | Lightweight hash routing, no SSR needed for embedding    |
+| UI           | Tailwind 4 + shadcn-svelte                        | Consistent, accessible component system                  |
+| Persistence  | SQLite via `modernc.org/sqlite` (pure Go, no CGO) | Single-file DB, no CGO toolchain needed                  |
+| Money        | Integer cents everywhere (Go `int64`)             | Eliminates float rounding errors                         |
+| Bindings     | `wails3 generate bindings` (auto-generated JS)    | Type-safe, zero boilerplate front-end calls              |
+| Export       | CSV (Go `encoding/csv`, UTF-8 BOM) into `exports/`| Excel-friendly, dependency-free, DB dir stays clean      |
 
 ## Scope
 
@@ -48,22 +48,24 @@ Core features, all confirmed:
 - [x] CSV export (single count + full history) into `exports/` under the app-data dir.
 - [x] Configurable currency and denominations.
 
-> **Note:** `[x]` marks the confirmed working set; remaining items are the
-> feature backlog to build against this plan. PDF export and expected-from-sales
-> are explicitly deferred (see Open questions).
+> **Note:** all items below shipped. PDF export and expected-from-sales
+> remain explicitly deferred (see Open questions).
 
 ## Data model
 
 Money is stored as integer cents. Totals are denormalized onto `counts` so a
 count row is immutable history even if denominations change later.
 
-| Table            | Columns                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------ |
-| `settings`       | id, store_name, currency_label, currency_symbol, active_key                                      |
-| `denominations`  | id, label, value_cents, kind (`bill`/`coin`), sort_order, active                                  |
-| `counts`         | id, created_at, type (`shift_open`/`shift_close`/`audit`), expected_cents, counted_cents, drops_cents, variance_cents, note |
-| `count_items`    | id, count_id (FK), denomination_id (FK), quantity, subtotal_cents                                |
-| `count_drops`    | id, count_id (FK), amount_cents, note, created_at                                                |
+Entity tables use opaque text IDs (`den_…`, `cnt_…`, `itm_…`, `drp_…`); only
+the settings singleton keeps a fixed integer id.
+
+| Table            | Columns                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `settings`       | id, store_name, currency_label, currency_symbol                                                                   |
+| `denominations`  | id, label, value_cents, kind (`bill`/`coin`), sort_order, active                                                    |
+| `counts`         | id, created_at, type (`shift_open`/`shift_close`/`audit`/`donation_urne`), expected_cents, counted_cents, drops_cents, variance_cents, note |
+| `count_items`    | id, count_id (FK), denomination_id (FK), quantity, subtotal_cents, denomination_label (snapshot), value_cents (snapshot) |
+| `count_drops`    | id, count_id (FK), amount_cents, note, created_at                                                                  |
 
 **Variance formula**
 
@@ -89,18 +91,19 @@ ListCurrencyPresets()                   []CurrencyPreset
 ### DenominationService
 
 ```
-List()                                  []Denomination
+List(activeOnly bool)                     []Denomination
 SaveAll(input []DenominationInput)      []Denomination
 ```
 
 ### CountService
 
 ```
-CreateCount(input CreateCountInput)     Count       // validates + computes totals
-ListCounts(filter CountFilter)          []CountSummary
-GetCount(id int64)                      CountDetail
-DeleteCount(id int64)                   void
-ExportCountCSV(id int64)                string       // returns saved file path
+CreateCount(input CreateCountInput)     CountDetail   // validates + computes totals
+ListCounts(filter CountFilter)          []Count       // newest first, optional type/date filter + limit/offset
+GetCount(id string)                     CountDetail
+DeleteCount(id string)                  void          // items/drops removed via CASCADE
+RestoreCount(detail CountDetail)        CountDetail   // delete-undo with original IDs
+ExportCountCSV(id string)               string        // saved file path under exports/
 ExportHistoryCSV()                      string
 ```
 
@@ -110,21 +113,26 @@ ExportHistoryCSV()                      string
 | -------------- | ------------------------------------------------------------------- |
 | `/`            | **Count** — the primary screen                                      |
 | `/history`     | **History** — filterable table of counts                            |
-| `/history/[id]`| **Count detail** — full breakdown incl. items and drops             |
+| `/history/:id` | **Count detail** — full breakdown incl. items and drops             |
 | `/settings`    | **Settings** — store info, currency preset, denomination editor     |
+
+Hash routing via `svelte-spa-router`; the app shell is a sidebar + header
+(theme and language toggles), with native File/Go menus wired to the same
+routes.
 
 ### Count screen layout
 
 - **Left:** denominations grouped `bills` → `coins`, one row per denomination
   with `+`/`−` quantity steppers; live per-row subtotal; grand total footer.
-- **Right:** count type select (`shift_open` / `shift_close` / `audit`),
-  expected amount input, safe drops list (+ amount & note), note field.
+- **Right:** count type select (`shift_open` / `shift_close` / `audit` /
+  `donation_urne`; urns carry no expected amount), expected amount input
+  (with history shortcut), safe drops list (+ amount & note), note field.
 - **Variance panel:** large, color-coded result (green `+` / red `−` / neutral
   balanced), computed on a reactive `variance = counted + drops − expected`.
-- **Save** → `CreateCount` → success dialog with denomination breakdown and a
-  "New count" action.
+- **Save** → `CreateCount` → success toast with a "view in history" action;
+  the form resets for the next count.
 
-## Milestones
+## Milestones (all complete)
 
 ### M1 — Scaffold
 - `wails3 init -n cashcount -t sveltekit-ts`, git init.
@@ -141,14 +149,14 @@ ExportHistoryCSV()                      string
 restarts; DB file created in app data dir.
 
 ### M3 — Frontend shell
-- `shadcn-svelte init` + add `button card table dialog input label select badge
-  tabs separator sonner`.
-- App shell with topnav + route scaffolding.
+- `shadcn-svelte` components (button card table dialog input label select badge
+  separator sonner, …).
+- App shell with sidebar + route scaffolding.
 
 **Acceptance:** all routes render; nav works.
 
 ### M4 — Count screen
-- Denomination grid, variance math, safe drops, save flow, success dialog.
+- Denomination grid, variance math, safe drops, save flow, success toast.
 
 **Acceptance:** manual count against expected produces correct variance; a safe
 drop shifts the balance by its amount; data appears in history.
@@ -167,7 +175,7 @@ drop shifts the balance by its amount; data appears in history.
 ### M7 — Polish & verify
 - Formatting helpers (cents → `$1,234.56`), empty states, confirm dialogs on
   delete, keyboard flow (Tab / arrows / Enter).
-- `go vet ./...`, `npx svelte-check`, `wails3 build` smoke test.
+- `go vet ./...`, `npm run check` (svelte-check), `wails3 build` smoke test.
 
 **Acceptance:** all checks pass; production build launches.
 
@@ -178,5 +186,7 @@ drop shifts the balance by its amount; data appears in history.
 - Expected-from-sales — natural next step if a POS data source ever appears.
 - Multi-register / cashier login — depends on store needs; schema is ready for
   extra FK columns.
-- Currency switching mid-history: counts store their own symbol snapshot today;
-  currency presets are a seed convenience, not per-count remapping.
+- Currency switching mid-history: item rows snapshot their denomination
+  label/value, but the currency symbol always renders from current settings —
+  there is no per-count currency snapshot, so old counts relabel when the
+  currency changes.
