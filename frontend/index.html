@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Comptage caisse</title>
+    <script>
+      try {
+        var t = localStorage.getItem("mode-watcher-mode") || "dark";
+        document.documentElement.classList.toggle("dark", t !== "light");
+        document.documentElement.style.colorScheme = t === "light" ? "light" : "dark";
+        document.documentElement.lang = localStorage.getItem("cashcount-locale") || "fr";
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

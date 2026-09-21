@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=cash-count-app
+Exec=cash-count-app
+Icon=cash-count-app
+Categories=Development;
+Terminal=false
+Keywords=wails
+Version=1.0
+StartupNotify=false

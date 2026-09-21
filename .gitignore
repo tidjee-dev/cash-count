@@ -1,0 +1,26 @@
+.task
+bin
+frontend/dist
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+# Mobile generated (per-machine; overlays hold absolute paths)
+build/ios/xcode/overlay.json
+build/ios/xcode/gen/
+build/android/overlay.json
+build/android/gen/
+# SQLite runtime files (the DB lives in the OS app-data dir, never in the repo)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+# Exported CSVs
+*.csv
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Go coverage
+coverage.out
+coverage.html
