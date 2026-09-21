@@ -7,6 +7,17 @@ history. Local-first, single register, no accounts, no cloud.
 Built with [Wails v3](https://v3.wails.io) (Go backend) + Svelte 5 + Tailwind 4 +
 shadcn-svelte.
 
+## Download
+
+Prebuilt binaries for Linux, Windows, and macOS (Apple Silicon) are published
+on the [Releases page](https://github.com/tidjee-dev/cash-count/releases).
+
+Latest version, direct links:
+
+- [Linux (amd64)](https://github.com/tidjee-dev/cash-count/releases/latest/download/cash-count-app-linux-amd64)
+- [Windows (amd64)](https://github.com/tidjee-dev/cash-count/releases/latest/download/cash-count-app-windows-amd64.exe)
+- [macOS (Apple Silicon)](https://github.com/tidjee-dev/cash-count/releases/latest/download/cash-count-app-macos-arm64) (+ [`.app` bundle](https://github.com/tidjee-dev/cash-count/releases/latest/download/cash-count-app-macos-arm64.app.zip))
+
 ## Features
 
 - Denomination count grid with quantity steppers and live subtotals

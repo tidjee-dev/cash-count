@@ -2,7 +2,10 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -12,6 +15,10 @@ import (
 	"github.com/tidjee-dev/cash-count/backend/settings"
 	"github.com/tidjee-dev/cash-count/backend/store"
 )
+
+// appVersion is shown in Help > About. Keep in sync with info.version in
+// build/config.yml (that file is not embedded, so it cannot be read here).
+const appVersion = "0.1.0"
 
 // Wails uses Go's `embed` package to embed the frontend files into the binary.
 // Any files in the frontend/dist folder will be embedded into the binary and
@@ -103,8 +110,6 @@ func buildAppMenu(app *application.App, countsSvc *counts.Service) {
 	file.AddSeparator()
 	file.AddRole(application.Quit)
 
-	// menu.AddRole(application.EditMenu)
-
 	goMenu := menu.AddSubmenu("Go")
 	goMenu.Add("Count").OnClick(func(_ *application.Context) {
 		emitNavigate(app, "/")
@@ -118,7 +123,60 @@ func buildAppMenu(app *application.App, countsSvc *counts.Service) {
 
 	menu.AddRole(application.ViewMenu)
 	menu.AddRole(application.WindowMenu)
-	menu.AddRole(application.HelpMenu)
+
+	help := menu.AddSubmenu("Help")
+	help.Add("About Cash Count").OnClick(func(_ *application.Context) {
+		showAbout(app, countsSvc.Store.Dir)
+	})
 
 	app.Menu.Set(menu)
+}
+
+// showAbout opens the app info panel: version, platform, and the live data
+// paths (database + exports) with filesystem stats. Stats are best-effort:
+// failures render as "?" rather than blocking the dialog.
+func showAbout(app *application.App, dataDir string) {
+	dbPath := filepath.Join(dataDir, "cashcount.db")
+	exportsDir := filepath.Join(dataDir, "exports")
+
+	dbSize := "?"
+	if fi, err := os.Stat(dbPath); err == nil {
+		dbSize = formatBytes(fi.Size())
+	}
+	exportCount := "?"
+	if files, err := filepath.Glob(filepath.Join(exportsDir, "*.csv")); err == nil {
+		exportCount = fmt.Sprintf("%d CSV file(s)", len(files))
+	}
+
+	msg := fmt.Sprintf(
+		"Cash Count %s\nPOS cash counting — local-first, single register.\n(c) 2026, Cash Count · MIT\n\nPlatform: %s / %s\nData folder: %s\nDatabase: %s (%s)\nExports: %s (%s)",
+		appVersion, runtime.GOOS, runtime.GOARCH,
+		dataDir, dbPath, dbSize, exportsDir, exportCount,
+	)
+
+	dlg := app.Dialog.Info().SetTitle("About Cash Count").SetMessage(msg)
+	dlg.AddButton("Open data folder").OnClick(func() {
+		_ = app.Env.OpenFileManager(dataDir, false)
+	})
+	dlg.AddButton("Open exports folder").OnClick(func() {
+		_ = app.Env.OpenFileManager(exportsDir, false)
+	})
+	dlg.AddButton("Close").SetAsDefault().OnClick(func() {})
+	dlg.Show()
+}
+
+// formatBytes renders a byte count for the About panel (e.g. 84 KB).
+func formatBytes(n int64) string {
+	const unit = 1024
+	if n < unit {
+		return fmt.Sprintf("%d B", n)
+	}
+	v := float64(n)
+	for _, u := range []string{"KB", "MB", "GB"} {
+		v /= unit
+		if v < unit {
+			return fmt.Sprintf("%.0f %s", v, u)
+		}
+	}
+	return fmt.Sprintf("%.0f TB", v/unit)
 }
