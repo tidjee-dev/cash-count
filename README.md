@@ -46,13 +46,13 @@ See [DOCUMENTATION.md](DOCUMENTATION.md) for usage, architecture, and schema.
 
 ## Development
 
-| Task                | Command                                |
-| ------------------- | -------------------------------------- |
-| Run (hot reload)    | `wails3 dev`                           |
-| Regenerate bindings | `wails3 generate bindings`             |
-| Backend checks      | `go vet ./...` and `go test ./...`     |
-| Frontend checks     | `cd frontend && npm run check`         |
-| Production build    | `wails3 build`                         |
+| Task                | Command                            |
+| ---------------------| ------------------------------------|
+| Run (hot reload)    | `wails3 dev`                       |
+| Regenerate bindings | `wails3 generate bindings`         |
+| Backend checks      | `go vet ./...` and `go test ./...` |
+| Frontend checks     | `cd frontend && npm run check`     |
+| Production build    | `wails3 build`                     |
 
 Bindings (`frontend/bindings/`) are generated — never edit them by hand. Money
 is integer cents (`int64`) end to end; see [PLAN.md](PLAN.md) for the original
