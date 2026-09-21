@@ -23,7 +23,7 @@ history. Local-first, single register, Wails v3 + Svelte 5 (Vite SPA).
 | Backend   | Go services + SQLite (`modernc.org/sqlite`, no CGO) |
 | Frontend  | Svelte 5 SPA (Vite + `svelte-spa-router`, hash routing) |
 | UI        | Tailwind 4 + [shadcn-svelte](https://shadcn-svelte.com) |
-| Bindings  | `wails3 generate bindings` (auto-generated JS)      |
+| Bindings  | `wails3 generate bindings` (auto-generated TS)      |
 
 ## Quick start
 

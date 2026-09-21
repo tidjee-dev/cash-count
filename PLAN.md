@@ -33,7 +33,7 @@ single-user, fully local.
 | UI           | Tailwind 4 + shadcn-svelte                        | Consistent, accessible component system                  |
 | Persistence  | SQLite via `modernc.org/sqlite` (pure Go, no CGO) | Single-file DB, no CGO toolchain needed                  |
 | Money        | Integer cents everywhere (Go `int64`)             | Eliminates float rounding errors                         |
-| Bindings     | `wails3 generate bindings` (auto-generated JS)    | Type-safe, zero boilerplate front-end calls              |
+| Bindings     | `wails3 generate bindings` (auto-generated TS)    | Type-safe, zero boilerplate front-end calls              |
 | Export       | CSV (Go `encoding/csv`, UTF-8 BOM) into `exports/`| Excel-friendly, dependency-free, DB dir stays clean      |
 
 ## Scope
