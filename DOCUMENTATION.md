@@ -179,6 +179,11 @@ sequenceDiagram
 | Frontend checks     | `cd frontend && npm run check`             |
 | Production build    | `wails3 build`                           |
 
+CI builds Linux on every PR (`.github/workflows/build.yml`); pushing a
+`v*` tag builds all three OSes and publishes a GitHub Release
+(`.github/workflows/release.yml`). Keep the tag and `build/config.yml`
+`info.version` in sync.
+
 Bindings are generated automatically on `dev`/`build` — never edit
 `frontend/bindings/` by hand.
 
